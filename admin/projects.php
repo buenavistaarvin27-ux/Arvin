@@ -165,6 +165,22 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                 padding: 15px;
             }
         }
+
+        .edit-btn {
+            display: inline-block;
+            padding: 7px 14px;
+            background: #8bc9a5;
+            color: #102219;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .edit-btn:hover {
+            background: #a2dbb8;
+        }
+        
     </style>
 </head>
 
@@ -203,12 +219,13 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Project Title</th>
-                            <th>Category</th>
-                            <th>Technologies</th>
-                            <th>Featured</th>
-                            <th>Status</th>
+                             <th>ID</th>
+                             <th>Project Title</th>
+                             <th>Category</th>
+                             <th>Technologies</th>
+                             <th>Featured</th>
+                             <th>Status</th>
+                             <th>Actions</th>
                         </tr>
                     </thead>
 
@@ -239,6 +256,13 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                                     <span class="status <?php echo escape($project['status']); ?>">
                                         <?php echo escape(ucfirst($project['status'])); ?>
                                     </span>
+                                </td>
+
+                                <td>
+                                     <a href="edit-project.php?id=<?php echo (int) $project['id']; ?>"
+                                        class="edit-btn">
+                                        Edit
+                                     </a>
                                 </td>
                             </tr>
 
