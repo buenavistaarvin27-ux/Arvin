@@ -20,7 +20,7 @@ Home, About, Skills, Projects, Resume/Experience, Contact.
 - index.html
 - about.html
 - skills.html
-- projects.html
+- projects.php
 - resume.html
 - contact.html
 - assets/style.css
