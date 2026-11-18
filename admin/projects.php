@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . "/../includes/auth.php";
 requireAdmin();
@@ -104,7 +105,7 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 750px;
+            min-width: 850px;
         }
 
         th, td {
@@ -156,14 +157,10 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
             border-radius: 8px;
         }
 
-        @media (max-width: 600px) {
-            body {
-                padding: 15px;
-            }
-
-            .card {
-                padding: 15px;
-            }
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .edit-btn {
@@ -175,12 +172,38 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
             text-decoration: none;
             font-size: 13px;
             font-weight: bold;
+            border: none;
         }
 
         .edit-btn:hover {
             background: #a2dbb8;
         }
-        
+
+        .delete-btn {
+            display: inline-block;
+            padding: 7px 14px;
+            background: #8b3939;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #a74747;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 
@@ -219,13 +242,13 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                 <table>
                     <thead>
                         <tr>
-                             <th>ID</th>
-                             <th>Project Title</th>
-                             <th>Category</th>
-                             <th>Technologies</th>
-                             <th>Featured</th>
-                             <th>Status</th>
-                             <th>Actions</th>
+                            <th>ID</th>
+                            <th>Project Title</th>
+                            <th>Category</th>
+                            <th>Technologies</th>
+                            <th>Featured</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
 
@@ -234,7 +257,9 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                         <?php foreach ($projects as $project): ?>
 
                             <tr>
-                                <td><?php echo escape($project['id']); ?></td>
+                                <td>
+                                    <?php echo escape($project['id']); ?>
+                                </td>
 
                                 <td>
                                     <?php echo escape($project['title']); ?>
@@ -259,10 +284,34 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                                 </td>
 
                                 <td>
-                                     <a href="edit-project.php?id=<?php echo (int) $project['id']; ?>"
-                                        class="edit-btn">
-                                        Edit
-                                     </a>
+                                    <div class="actions">
+
+                                        <!-- Edit Button -->
+                                        <a href="edit-project.php?id=<?php echo (int) $project['id']; ?>"
+                                           class="edit-btn">
+                                            Edit
+                                        </a>
+
+                                        <!-- Delete Button -->
+                                        <form method="POST"
+                                              action="delete-project.php"
+                                              onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+
+                                            <input type="hidden"
+                                                   name="csrf_token"
+                                                   value="<?php echo escape($_SESSION['csrf_token'] ?? ''); ?>">
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="<?php echo (int) $project['id']; ?>">
+
+                                            <button type="submit" class="delete-btn">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </div>
                                 </td>
                             </tr>
 
