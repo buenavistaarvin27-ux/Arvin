@@ -13,8 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sessionToken = $_SESSION['csrf_token'] ?? '';
 
     if (
+        !is_string($token) ||
+        !is_string($sessionToken) ||
         $sessionToken === '' ||
-        $token === '' ||
         !hash_equals($sessionToken, $token)
     ) {
         http_response_code(403);
@@ -27,12 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = trim($_POST['category'] ?? '');
     $technologies = trim($_POST['technologies'] ?? '');
     $project_url = trim($_POST['project_url'] ?? '');
+
     $sort_order = filter_var(
         $_POST['sort_order'] ?? 0,
         FILTER_VALIDATE_INT
     );
+
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
     $status = $_POST['status'] ?? 'active';
+
+    $imagePath = null;
+    $absoluteImagePath = null;
 
     // Validate required fields
     if ($title === '' || $description === '') {
@@ -50,7 +56,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $error = "Please enter a valid project URL.";
 
-    } else {
+    }
+
+    // Validate uploaded image
+    if ($error === '' && isset($_FILES['image'])) {
+
+        $file = $_FILES['image'];
+
+        if ($file['error'] !== UPLOAD_ERR_NO_FILE) {
+
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $error = "Image upload failed. Please try again.";
+
+            } elseif ($file['size'] > 2 * 1024 * 1024) {
+                $error = "Image size must not exceed 2 MB.";
+
+            } elseif (!is_uploaded_file($file['tmp_name'])) {
+                $error = "Invalid image upload.";
+
+            } else {
+
+                // Check actual image MIME type
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo
+                    ? finfo_file($finfo, $file['tmp_name'])
+                    : false;
+
+                if ($finfo) {
+                    finfo_close($finfo);
+                }
+
+                // Allowed image types
+                $allowedTypes = [
+                    'image/jpeg' => 'jpg',
+                    'image/png'  => 'png',
+                    'image/webp' => 'webp'
+                ];
+
+                if (
+                    !$mimeType ||
+                    !isset($allowedTypes[$mimeType]) ||
+                    getimagesize($file['tmp_name']) === false
+                ) {
+                    $error = "Only JPG, PNG, and WEBP images are allowed.";
+
+                } else {
+
+                    $uploadDirectory = __DIR__ . '/../uploads';
+
+                    if (
+                        !is_dir($uploadDirectory) ||
+                        !is_writable($uploadDirectory)
+                    ) {
+                        $error = "The uploads folder is missing or not writable.";
+
+                    } else {
+
+                        // Generate a unique filename
+                        try {
+                            $filename = bin2hex(random_bytes(16))
+                                . '.'
+                                . $allowedTypes[$mimeType];
+
+                            $absoluteImagePath = $uploadDirectory
+                                . DIRECTORY_SEPARATOR
+                                . $filename;
+
+                            $imagePath = 'uploads/' . $filename;
+
+                            // Move image into uploads folder
+                            if (!move_uploaded_file(
+                                $file['tmp_name'],
+                                $absoluteImagePath
+                            )) {
+                                $error = "Unable to save the uploaded image.";
+                                $imagePath = null;
+                                $absoluteImagePath = null;
+                            }
+
+                        } catch (Throwable $e) {
+                            error_log("Image upload failed: " . $e->getMessage());
+                            $error = "Unable to process the uploaded image.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Save project to database
+    if ($error === '') {
 
         try {
             $stmt = $pdo->prepare("
@@ -58,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     title,
                     description,
                     category,
+                    image,
                     technologies,
                     project_url,
                     sort_order,
@@ -67,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     :title,
                     :description,
                     :category,
+                    :image,
                     :technologies,
                     :project_url,
                     :sort_order,
@@ -79,6 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':title' => $title,
                 ':description' => $description,
                 ':category' => $category !== '' ? $category : null,
+                ':image' => $imagePath,
                 ':technologies' => $technologies !== '' ? $technologies : null,
                 ':project_url' => $project_url !== '' ? $project_url : null,
                 ':sort_order' => $sort_order,
@@ -90,6 +188,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
 
         } catch (PDOException $e) {
+
+            // Remove uploaded image if database insertion fails
+            if ($absoluteImagePath && file_exists($absoluteImagePath)) {
+                unlink($absoluteImagePath);
+            }
+
             error_log("Project creation failed: " . $e->getMessage());
             $error = "Unable to save the project. Please try again.";
         }
@@ -140,6 +244,10 @@ function escapeValue($value) {
             text-decoration: none;
         }
 
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
         h1 {
             color: #a3e6b5;
             margin-bottom: 10px;
@@ -175,6 +283,10 @@ function escapeValue($value) {
             background: #101b16;
             color: white;
             font-size: 14px;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
         }
 
         textarea {
@@ -263,12 +375,12 @@ function escapeValue($value) {
             </div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
 
             <input
                 type="hidden"
                 name="csrf_token"
-                value="<?php echo escapeValue($_SESSION['csrf_token']); ?>"
+                value="<?php echo escapeValue($_SESSION['csrf_token'] ?? ''); ?>"
             >
 
             <div class="form-group">
@@ -302,6 +414,19 @@ function escapeValue($value) {
                     value="<?php echo escapeValue($_POST['category'] ?? ''); ?>"
                     placeholder="Example: Web Development"
                 >
+            </div>
+
+            <div class="form-group">
+                <label for="image">Project Image</label>
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                >
+                <p class="hint">
+                    Accepted formats: JPG, JPEG, PNG, WEBP. Maximum size: 2 MB.
+                </p>
             </div>
 
             <div class="form-group">
@@ -352,6 +477,7 @@ function escapeValue($value) {
             <div class="form-group">
                 <label for="status">Project Status</label>
                 <select id="status" name="status">
+
                     <option
                         value="active"
                         <?php echo ($_POST['status'] ?? 'active') === 'active' ? 'selected' : ''; ?>
@@ -365,6 +491,7 @@ function escapeValue($value) {
                     >
                         Inactive
                     </option>
+
                 </select>
             </div>
 

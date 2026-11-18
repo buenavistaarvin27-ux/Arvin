@@ -9,6 +9,7 @@ config/database.php
 # Uploaded files
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
 
 # Logs
 *.log

@@ -1,0 +1,7 @@
+# Prevent directory browsing
+Options -Indexes
+
+# Block executable script files
+<FilesMatch "\.(php[0-9]?|phtml|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
