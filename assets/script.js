@@ -1,10 +1,9 @@
-
-const $ = (s, p = document) => p.querySelector(s),
-  $$ = (s, p = document) => [...p.querySelectorAll(s)];
+const $ = (s, p = document) => p.querySelector(s);
+const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 
 const initPortfolio = () => {
-  const menu = $(".menu-btn"),
-    links = $(".nav-links");
+  const menu = $(".menu-btn");
+  const links = $(".nav-links");
 
   // Mobile Navigation
   if (menu) {
@@ -28,7 +27,9 @@ const initPortfolio = () => {
         href.startsWith("http") ||
         href.startsWith("#") ||
         href.startsWith("mailto:")
-      ) return;
+      ) {
+        return;
+      }
 
       event.preventDefault();
 
@@ -53,10 +54,12 @@ const initPortfolio = () => {
 
     themeButtons.forEach((button) => {
       button.textContent = isLight ? "Dark mode" : "Light mode";
+
       button.setAttribute(
         "aria-label",
         isLight ? "Switch to dark mode" : "Switch to light mode"
       );
+
       button.title = isLight ? "Switch to dark mode" : "Switch to light mode";
     });
   };
@@ -98,8 +101,8 @@ const initPortfolio = () => {
 
   if (type) {
     const text = type.dataset.text || "Information Technology Student";
-    let i = 0,
-      del = false;
+    let i = 0;
+    let del = false;
 
     const tick = () => {
       type.textContent = del ? text.slice(0, i--) : text.slice(0, i++);
@@ -151,7 +154,10 @@ const initPortfolio = () => {
 
       if (!target) return;
 
-      window.scrollTo({ top: target.offsetTop, behavior: "smooth" });
+      window.scrollTo({
+        top: target.offsetTop,
+        behavior: "smooth"
+      });
     };
 
     window.addEventListener(
@@ -230,8 +236,8 @@ const initPortfolio = () => {
   );
 
   // Project Image Preview Modal
-  const modal = $("#modal"),
-    modalImg = $("#modalImg");
+  const modal = $("#modal");
+  const modalImg = $("#modalImg");
 
   $$(".zoomable").forEach((img) =>
     img.addEventListener("click", () => {
@@ -252,7 +258,36 @@ const initPortfolio = () => {
     }
   });
 
-  // Contact Form Validation
+
+  // Contact Form Submission Status
+  const formStatus = $("#formStatus");
+  const params = new URLSearchParams(window.location.search);
+  const submissionStatus = params.get("status");
+
+  const statusMessages = {
+    success: "Your message has been sent successfully!",
+    invalid_name: "Please enter a valid name.",
+    invalid_email: "Please enter a valid email address.",
+    invalid_message: "Your message must be between 10 and 10,000 characters.",
+    error: "Sorry, something went wrong. Please try again."
+  };
+
+  if (formStatus && statusMessages[submissionStatus]) {
+    formStatus.textContent = statusMessages[submissionStatus];
+
+    if (submissionStatus !== "success") {
+      formStatus.classList.add("error");
+    }
+
+    // Remove status parameter after displaying the message
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+  }
+
+  // Contact Form Validation and Submission
   const form = $("#contactForm");
 
   if (form) {
@@ -261,33 +296,46 @@ const initPortfolio = () => {
 
       let ok = true;
 
-      const name = $("#name"),
-        email = $("#email"),
-        message = $("#message");
+      const name = $("#name");
+      const email = $("#email");
+      const message = $("#message");
 
-      $$(".error", form).forEach((x) => (x.textContent = ""));
+      const nameError = $("#nameError");
+      const emailError = $("#emailError");
+      const messageError = $("#messageError");
+      const formStatus = $("#formStatus");
 
+      // Clear previous errors and status
+      $$(".error", form).forEach((x) => {
+        x.textContent = "";
+      });
+
+      if (formStatus) {
+        formStatus.textContent = "";
+      }
+
+      // Validate name
       if (name.value.trim().length < 2) {
-        $("#nameError").textContent = "Please enter your name.";
+        nameError.textContent = "Please enter your name.";
         ok = false;
       }
 
+      // Validate email
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
-        $("#emailError").textContent = "Please enter a valid email.";
+        emailError.textContent = "Please enter a valid email.";
         ok = false;
       }
 
+      // Validate message
       if (message.value.trim().length < 10) {
-        $("#messageError").textContent =
+        messageError.textContent =
           "Message must be at least 10 characters.";
         ok = false;
       }
 
+      // Submit valid form to PHP
       if (ok) {
-        $("#formStatus").textContent =
-          "Message validated successfully! (Connect a form service to receive submissions.)";
-
-        form.reset();
+        form.submit();
       }
     });
   }
