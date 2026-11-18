@@ -27,6 +27,8 @@ function escape($value) {
 }
 
 $username = escape($_SESSION['admin_username'] ?? 'Admin');
+
+$success = ($_GET['success'] ?? '') === 'added';
 ?>
 
 <!DOCTYPE html>
@@ -84,6 +86,30 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
 
         .back-link:hover {
             text-decoration: underline;
+        }
+
+        .add-btn {
+            display: inline-block;
+            background: #78c992;
+            color: #102016;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background: #a3e6b5;
+        }
+
+        .success-message {
+            background: #244b32;
+            color: #a3e6b5;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
 
         .card {
@@ -145,13 +171,12 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
         }
 
         .project-thumb {
-         width: 85px;
-        height: 60px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid #48634f;
-        display: block;
-        
+            width: 85px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #48634f;
+            display: block;
         }
 
         .no-image {
@@ -218,6 +243,11 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
             .card {
                 padding: 15px;
             }
+
+            .add-btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -238,7 +268,17 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                 Manage your portfolio projects here.
             </p>
         </div>
+
+        <a href="add-project.php" class="add-btn">
+            + Add New Project
+        </a>
     </header>
+
+    <?php if ($success): ?>
+        <div class="success-message">
+            Project successfully added!
+        </div>
+    <?php endif; ?>
 
     <section class="card">
 
@@ -286,11 +326,11 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                                             class="project-thumb"
                                         >
 
-                                            <?php else: ?>
+                                    <?php else: ?>
 
-                                                <span class="no-image">No image</span>
+                                        <span class="no-image">No image</span>
 
-                                            <?php endif; ?>
+                                    <?php endif; ?>
                                 </td>
 
                                 <td>
@@ -318,24 +358,30 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                                 <td>
                                     <div class="actions">
 
-                                        <!-- Edit Button -->
-                                        <a href="edit-project.php?id=<?php echo (int) $project['id']; ?>"
-                                           class="edit-btn">
+                                        <a
+                                            href="edit-project.php?id=<?php echo (int) $project['id']; ?>"
+                                            class="edit-btn"
+                                        >
                                             Edit
                                         </a>
 
-                                        <!-- Delete Button -->
-                                        <form method="POST"
-                                              action="delete-project.php"
-                                              onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+                                        <form
+                                            method="POST"
+                                            action="delete-project.php"
+                                            onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');"
+                                        >
 
-                                            <input type="hidden"
-                                                   name="csrf_token"
-                                                   value="<?php echo escape($_SESSION['csrf_token'] ?? ''); ?>">
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?php echo escape($_SESSION['csrf_token'] ?? ''); ?>"
+                                            >
 
-                                            <input type="hidden"
-                                                   name="id"
-                                                   value="<?php echo (int) $project['id']; ?>">
+                                            <input
+                                                type="hidden"
+                                                name="id"
+                                                value="<?php echo (int) $project['id']; ?>"
+                                            >
 
                                             <button type="submit" class="delete-btn">
                                                 Delete
