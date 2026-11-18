@@ -121,6 +121,7 @@ if (isset($_SESSION['admin_id'])) {
                 type="email"
                 name="email"
                 placeholder="Enter your email"
+                autocomplete="username"
                 required
             >
 
@@ -130,6 +131,7 @@ if (isset($_SESSION['admin_id'])) {
                 type="password"
                 name="password"
                 placeholder="Enter your password"
+                autocomplete="current-password"
                 required
             >
 

@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sessionToken === '' ||
         !hash_equals($sessionToken, $submittedToken)
     ) {
+        http_response_code(403);
         die("Invalid security token. Please refresh the page.");
     }
 
@@ -82,9 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Process replacement image if selected
-    if ($error === '' && isset($_FILES['image']) &&
-        $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-
+    if (
+        $error === '' &&
+        isset($_FILES['image']) &&
+        $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE
+    ) {
         $file = $_FILES['image'];
 
         if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -93,7 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($file['size'] > 2 * 1024 * 1024) {
             $error = "Image must not exceed 2 MB.";
 
-        } elseif (!is_uploaded_file($file['tmp_name'])) {
+        } elseif (
+            empty($file['tmp_name']) ||
+            !is_uploaded_file($file['tmp_name'])
+        ) {
             $error = "Invalid image upload.";
 
         } else {
@@ -122,8 +128,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $uploadDirectory = __DIR__ . '/../uploads';
 
-                    if (!is_dir($uploadDirectory) ||
-                        !is_writable($uploadDirectory)) {
+                    if (
+                        !is_dir($uploadDirectory) ||
+                        !is_writable($uploadDirectory)
+                    ) {
                         $error = "The uploads folder is unavailable.";
                     } else {
                         $filename = bin2hex(random_bytes(16)) . '.' .
@@ -178,10 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Delete old image only after successful replacement
             if ($newImagePath !== null && !empty($oldImagePath)) {
-                if (preg_match(
-                    '#^uploads/[a-f0-9]{32}\.(jpg|png|webp)$#',
-                    $oldImagePath
-                )) {
+                if (
+                    preg_match(
+                        '#^uploads/[a-f0-9]{32}\.(jpg|png|webp)$#',
+                        $oldImagePath
+                    )
+                ) {
                     $oldFile = __DIR__ . '/../' . $oldImagePath;
 
                     if (is_file($oldFile)) {
@@ -393,39 +403,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" enctype="multipart/form-data">
 
-            <input type="hidden"
-                   name="csrf_token"
-                   value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+            >
 
             <div class="form-group">
                 <label for="title">Project Title *</label>
-                <input type="text" id="title" name="title"
-                       value="<?= htmlspecialchars($project['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                       required>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value="<?= htmlspecialchars($project['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                    required
+                >
             </div>
 
             <div class="form-group">
                 <label for="description">Description *</label>
-                <textarea id="description" name="description"
-                          required><?= htmlspecialchars($project['description'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                <textarea
+                    id="description"
+                    name="description"
+                    required
+                ><?= htmlspecialchars($project['description'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
             </div>
 
             <div class="form-group">
                 <label for="category">Category</label>
-                <input type="text" id="category" name="category"
-                       value="<?= htmlspecialchars($project['category'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    value="<?= htmlspecialchars($project['category'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >
             </div>
 
             <div class="form-group">
                 <label for="technologies">Technologies</label>
-                <input type="text" id="technologies" name="technologies"
-                       value="<?= htmlspecialchars($project['technologies'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <input
+                    type="text"
+                    id="technologies"
+                    name="technologies"
+                    value="<?= htmlspecialchars($project['technologies'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >
             </div>
 
             <div class="form-group">
                 <label for="project_url">Project URL</label>
-                <input type="url" id="project_url" name="project_url"
-                       value="<?= htmlspecialchars($project['project_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <input
+                    type="url"
+                    id="project_url"
+                    name="project_url"
+                    value="<?= htmlspecialchars($project['project_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                >
             </div>
 
             <div class="form-group">
@@ -444,10 +475,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label for="image">Replace Project Image</label>
-                <input type="file"
-                       id="image"
-                       name="image"
-                       accept=".jpg,.jpeg,.png,.webp">
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept=".jpg,.jpeg,.png,.webp"
+                >
 
                 <p class="image-hint">
                     Optional. JPG, PNG, or WEBP. Maximum size: 2 MB.
@@ -457,15 +490,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label for="sort_order">Display Order</label>
-                <input type="number" id="sort_order" name="sort_order"
-                       min="0"
-                       value="<?= htmlspecialchars((string)($project['sort_order'] ?? 0), ENT_QUOTES, 'UTF-8') ?>"
-                       required>
+                <input
+                    type="number"
+                    id="sort_order"
+                    name="sort_order"
+                    min="0"
+                    value="<?= htmlspecialchars((string)($project['sort_order'] ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                    required
+                >
             </div>
 
             <div class="form-group checkbox-group">
-                <input type="checkbox" id="is_featured" name="is_featured"
-                       <?= !empty($project['is_featured']) ? 'checked' : '' ?>>
+                <input
+                    type="checkbox"
+                    id="is_featured"
+                    name="is_featured"
+                    <?= !empty($project['is_featured']) ? 'checked' : '' ?>
+                >
                 <label for="is_featured">Featured Project</label>
             </div>
 
@@ -473,13 +514,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="status">Project Status</label>
 
                 <select id="status" name="status" required>
-                    <option value="active"
-                        <?= ($project['status'] ?? '') === 'active' ? 'selected' : '' ?>>
+                    <option
+                        value="active"
+                        <?= ($project['status'] ?? '') === 'active' ? 'selected' : '' ?>
+                    >
                         Active
                     </option>
 
-                    <option value="inactive"
-                        <?= ($project['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>
+                    <option
+                        value="inactive"
+                        <?= ($project['status'] ?? '') === 'inactive' ? 'selected' : '' ?>
+                    >
                         Inactive
                     </option>
                 </select>

@@ -1,4 +1,3 @@
-
 <?php
 
 require_once __DIR__ . "/../config/database.php";
@@ -13,8 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Validate CSRF token
 $token = $_POST['csrf_token'] ?? '';
 
-if (!hash_equals($_SESSION['csrf_token'], $token)) {
-    die("Invalid request.");
+if (
+    empty($_SESSION['csrf_token']) ||
+    !hash_equals($_SESSION['csrf_token'], $token)
+) {
+    http_response_code(403);
+    exit("Invalid request.");
 }
 
 // Get login information

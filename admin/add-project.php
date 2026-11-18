@@ -71,9 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($file['size'] > 2 * 1024 * 1024) {
                 $error = "Image size must not exceed 2 MB.";
 
-            } elseif (!is_uploaded_file($file['tmp_name'])) {
+            } elseif (
+                empty($file['tmp_name']) ||
+                !is_uploaded_file($file['tmp_name'])
+            ) {
                 $error = "Invalid image upload.";
-
             } else {
 
                 // Check actual image MIME type

@@ -1,0 +1,7 @@
+# Prevent directory browsing
+Options -Indexes
+
+# Protect sensitive configuration and project files
+<FilesMatch "^(\.env|\.git|composer\.(json|lock)|README\.md)$">
+    Require all denied
+</FilesMatch>

@@ -412,6 +412,5 @@ $success = ($_GET['success'] ?? '') === 'added';
     </section>
 
 </main>
-
 </body>
 </html>
