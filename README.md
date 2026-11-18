@@ -28,7 +28,21 @@ Home, About, Skills, Projects, Resume/Experience, Contact.
 - assets/profile.svg
 - assets/project1.svg ... project4.svg
 
-## Deploy
-Upload the folder to a GitHub repository and enable GitHub Pages, or import the repository into Vercel/Netlify.
+## Deploy to InfinityFree
 
-Note: The email/social links are placeholders and should be replaced with the student's real links before submission. The contact form currently validates on the browser; connect Formspree, Netlify Forms, or another backend if actual message delivery is required.
+This site uses PHP and MySQL, so it needs PHP hosting; GitHub Pages cannot run its PHP files.
+
+1. Create the InfinityFree website and MySQL database. Keep the database host, name, username, and password from the control panel.
+2. In the GitHub repository, open **Settings → Secrets and variables → Actions** and add these repository secrets:
+   - `INFINITYFREE_FTP_SERVER`
+   - `INFINITYFREE_FTP_USERNAME`
+   - `INFINITYFREE_FTP_PASSWORD`
+   - `INFINITYFREE_DB_HOST`
+   - `INFINITYFREE_DB_NAME`
+   - `INFINITYFREE_DB_USERNAME`
+   - `INFINITYFREE_DB_PASSWORD`
+3. Push to `main`. The `Deploy to InfinityFree` workflow uploads the site to `/htdocs/`; you can also run it manually from the repository's **Actions** tab.
+
+Use the FTP server and database details shown in your InfinityFree control panel. Do not commit credentials or post them in chat. The workflow creates `config/database.php` from Actions secrets during deployment; that file remains ignored by Git.
+
+Note: Replace the placeholder email/social links with your real links before submission.
