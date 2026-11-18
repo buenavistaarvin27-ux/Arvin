@@ -144,6 +144,21 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
             color: #f5d98a;
         }
 
+        .project-thumb {
+         width: 85px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #48634f;
+        display: block;
+        
+        }
+
+        .no-image {
+            color: #8fa397;
+            font-size: 12px;
+        }
+
         .empty-message {
             text-align: center;
             padding: 35px;
@@ -243,6 +258,7 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Image</th>
                             <th>Project Title</th>
                             <th>Category</th>
                             <th>Technologies</th>
@@ -259,6 +275,22 @@ $username = escape($_SESSION['admin_username'] ?? 'Admin');
                             <tr>
                                 <td>
                                     <?php echo escape($project['id']); ?>
+                                </td>
+
+                                <td>
+                                    <?php if (!empty($project['image'])): ?>
+
+                                        <img
+                                            src="../<?php echo escape($project['image']); ?>"
+                                            alt="<?php echo escape($project['title']); ?>"
+                                            class="project-thumb"
+                                        >
+
+                                            <?php else: ?>
+
+                                                <span class="no-image">No image</span>
+
+                                            <?php endif; ?>
                                 </td>
 
                                 <td>

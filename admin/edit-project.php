@@ -1,10 +1,14 @@
+
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 requireAdmin();
 
 require_once __DIR__ . '/../config/database.php';
 
-// Get the project ID from the URL
+$error = '';
+$newImagePath = null;
+
+// Get project ID
 $projectId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
 if (!$projectId || $projectId < 1) {
@@ -12,7 +16,7 @@ if (!$projectId || $projectId < 1) {
     exit;
 }
 
-// Fetch the selected project
+// Fetch project
 try {
     $stmt = $pdo->prepare("SELECT * FROM projects WHERE id = :id LIMIT 1");
     $stmt->execute(['id' => $projectId]);
@@ -22,7 +26,6 @@ try {
         header("Location: projects.php?error=not_found");
         exit;
     }
-
 } catch (PDOException $e) {
     error_log("Project fetch error: " . $e->getMessage());
     die("Unable to load project.");
@@ -54,20 +57,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isFeatured = isset($_POST['is_featured']) ? 1 : 0;
     $status = $_POST['status'] ?? '';
 
-    // Validate required fields
+    // Validate form fields
     if ($title === '' || $description === '') {
         $error = "Title and description are required.";
+
     } elseif ($sortOrder === false || $sortOrder === null || $sortOrder < 0) {
         $error = "Display order must be a valid non-negative number.";
+
     } elseif (!in_array($status, ['active', 'inactive'], true)) {
         $error = "Please select a valid project status.";
+
     } elseif (
         $projectUrl !== '' &&
-        (!filter_var($projectUrl, FILTER_VALIDATE_URL) ||
-        !in_array(strtolower(parse_url($projectUrl, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true))
+        (
+            !filter_var($projectUrl, FILTER_VALIDATE_URL) ||
+            !in_array(
+                strtolower(parse_url($projectUrl, PHP_URL_SCHEME) ?? ''),
+                ['http', 'https'],
+                true
+            )
+        )
     ) {
         $error = "Please enter a valid HTTP or HTTPS project URL.";
-    } else {
+    }
+
+    // Process replacement image if selected
+    if ($error === '' && isset($_FILES['image']) &&
+        $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+
+        $file = $_FILES['image'];
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $error = "Image upload failed. Please try again.";
+
+        } elseif ($file['size'] > 2 * 1024 * 1024) {
+            $error = "Image must not exceed 2 MB.";
+
+        } elseif (!is_uploaded_file($file['tmp_name'])) {
+            $error = "Invalid image upload.";
+
+        } else {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+            if ($finfo === false) {
+                $error = "Unable to validate the uploaded image.";
+            } else {
+                $mimeType = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+
+                $allowedTypes = [
+                    'image/jpeg' => 'jpg',
+                    'image/png'  => 'png',
+                    'image/webp' => 'webp'
+                ];
+
+                $imageInfo = getimagesize($file['tmp_name']);
+
+                if (
+                    !isset($allowedTypes[$mimeType]) ||
+                    $imageInfo === false ||
+                    $imageInfo['mime'] !== $mimeType
+                ) {
+                    $error = "Only valid JPG, PNG, and WEBP images are allowed.";
+                } else {
+                    $uploadDirectory = __DIR__ . '/../uploads';
+
+                    if (!is_dir($uploadDirectory) ||
+                        !is_writable($uploadDirectory)) {
+                        $error = "The uploads folder is unavailable.";
+                    } else {
+                        $filename = bin2hex(random_bytes(16)) . '.' .
+                            $allowedTypes[$mimeType];
+
+                        $destination = $uploadDirectory . '/' . $filename;
+
+                        if (move_uploaded_file($file['tmp_name'], $destination)) {
+                            $newImagePath = 'uploads/' . $filename;
+                        } else {
+                            $error = "Unable to save the uploaded image.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Save changes
+    if ($error === '') {
+
+        $oldImagePath = $project['image'] ?? null;
+        $imagePath = $newImagePath ?? $oldImagePath;
 
         try {
             $stmt = $pdo->prepare("
@@ -77,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     category = :category,
                     technologies = :technologies,
                     project_url = :project_url,
+                    image = :image,
                     sort_order = :sort_order,
                     is_featured = :is_featured,
                     status = :status
@@ -89,22 +169,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'category' => $category,
                 'technologies' => $technologies,
                 'project_url' => $projectUrl !== '' ? $projectUrl : null,
+                'image' => $imagePath,
                 'sort_order' => $sortOrder,
                 'is_featured' => $isFeatured,
                 'status' => $status,
                 'id' => $projectId
             ]);
 
+            // Delete old image only after successful replacement
+            if ($newImagePath !== null && !empty($oldImagePath)) {
+                if (preg_match(
+                    '#^uploads/[a-f0-9]{32}\.(jpg|png|webp)$#',
+                    $oldImagePath
+                )) {
+                    $oldFile = __DIR__ . '/../' . $oldImagePath;
+
+                    if (is_file($oldFile)) {
+                        unlink($oldFile);
+                    }
+                }
+            }
+
             header("Location: projects.php?success=updated");
             exit;
 
         } catch (PDOException $e) {
             error_log("Project update error: " . $e->getMessage());
+
+            // Remove newly uploaded image if database update fails
+            if ($newImagePath !== null) {
+                $newFile = __DIR__ . '/../' . $newImagePath;
+
+                if (is_file($newFile)) {
+                    unlink($newFile);
+                }
+            }
+
             $error = "Unable to update project. Please try again.";
         }
     }
 
-    // Keep submitted values if validation fails
+    // Preserve submitted values
     $project = array_merge($project, [
         'title' => $title,
         'description' => $description,
@@ -123,6 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Edit Project | Admin</title>
 
     <style>
@@ -187,6 +293,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             resize: vertical;
         }
 
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        .current-image {
+            width: 180px;
+            max-height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #395746;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .image-hint {
+            color: #a9bcb0;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -238,8 +364,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         button:hover {
             background: #a2dbb8;
         }
+
+        @media (max-width: 600px) {
+            .form-card {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -254,9 +391,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
 
-            <input type="hidden" name="csrf_token"
+            <input type="hidden"
+                   name="csrf_token"
                    value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="form-group">
@@ -291,6 +429,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-group">
+                <label>Current Project Image</label>
+
+                <?php if (!empty($project['image'])): ?>
+                    <img
+                        src="../<?= htmlspecialchars($project['image'], ENT_QUOTES, 'UTF-8') ?>"
+                        alt="Current project image"
+                        class="current-image"
+                    >
+                <?php else: ?>
+                    <p class="image-hint">No image uploaded yet.</p>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Replace Project Image</label>
+                <input type="file"
+                       id="image"
+                       name="image"
+                       accept=".jpg,.jpeg,.png,.webp">
+
+                <p class="image-hint">
+                    Optional. JPG, PNG, or WEBP. Maximum size: 2 MB.
+                    Leave empty to keep the current image.
+                </p>
+            </div>
+
+            <div class="form-group">
                 <label for="sort_order">Display Order</label>
                 <input type="number" id="sort_order" name="sort_order"
                        min="0"
@@ -306,6 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label for="status">Project Status</label>
+
                 <select id="status" name="status" required>
                     <option value="active"
                         <?= ($project['status'] ?? '') === 'active' ? 'selected' : '' ?>>
@@ -330,4 +496,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </body>
 </html>
-
