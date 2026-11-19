@@ -244,6 +244,7 @@ const initPortfolio = () => {
       if (!modal || !modalImg) return;
 
       modalImg.src = img.src;
+      modalImg.alt = img.alt || "Project preview";
       modal.classList.add("open");
     })
   );
@@ -255,6 +256,11 @@ const initPortfolio = () => {
   modal?.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.classList.remove("open");
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      modal?.classList.remove("open");
     }
   });
 

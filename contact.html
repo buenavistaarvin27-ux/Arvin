@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="Arvin Buenavista personal portfolio" />
+    <meta name="description" content="Contact Arvin Buenavista for projects, school collaboration, or professional inquiries." />
+    <link rel="canonical" href="https://arvinbuenavista.thsite.top/contact.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Contact · Arvin Buenavista" />
+    <meta property="og:description" content="Contact Arvin Buenavista for projects, school collaboration, or professional inquiries." />
+    <meta property="og:url" content="https://arvinbuenavista.thsite.top/contact.html" />
+    <meta property="og:image" content="https://arvinbuenavista.thsite.top/assets/profile.jpg" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <title>Contact · Arvin Buenavista</title>
 
     <script>
@@ -25,9 +32,9 @@
       <div class="container nav">
         <a class="logo" href="index.html">Arvin<span>.</span></a>
 
-        <button class="menu-btn" aria-label="Open menu">☰</button>
+        <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="site-navigation">☰</button>
 
-        <nav>
+        <nav id="site-navigation">
           <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
             <li><a href="about.html">About</a></li>
@@ -97,7 +104,12 @@
             action="contact-submit.php"
             method="POST"
             novalidate
+            autocomplete="on"
           >
+            <div class="honeypot" aria-hidden="true">
+              <label for="website">Leave this field blank</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
             <div class="field">
               <label for="name">Name</label>
               <input
@@ -105,6 +117,11 @@
                 name="name"
                 type="text"
                 placeholder="Example: Arvin Buenavista"
+                autocomplete="name"
+                minlength="2"
+                maxlength="150"
+                required
+                aria-describedby="nameError"
               />
               <div id="nameError" class="error"></div>
             </div>
@@ -116,6 +133,10 @@
                 name="email"
                 type="email"
                 placeholder="Example: Arvin@gmail.com"
+                autocomplete="email"
+                maxlength="150"
+                required
+                aria-describedby="emailError"
               />
               <div id="emailError" class="error"></div>
             </div>
@@ -126,6 +147,10 @@
                 id="message"
                 name="message"
                 placeholder="Write your message..."
+                minlength="10"
+                maxlength="10000"
+                required
+                aria-describedby="messageError"
               ></textarea>
               <div id="messageError" class="error"></div>
             </div>

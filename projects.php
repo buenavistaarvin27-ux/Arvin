@@ -28,7 +28,14 @@ function escape($value) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="Arvin Buenavista personal portfolio" />
+    <meta name="description" content="Selected web development, design, and networking projects by Arvin Buenavista." />
+    <link rel="canonical" href="https://arvinbuenavista.thsite.top/projects.php" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Projects · Arvin Buenavista" />
+    <meta property="og:description" content="Selected web development, design, and networking projects by Arvin Buenavista." />
+    <meta property="og:url" content="https://arvinbuenavista.thsite.top/projects.php" />
+    <meta property="og:image" content="https://arvinbuenavista.thsite.top/assets/profile.jpg" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <title>Projects · Arvin Buenavista</title>
 
     <script>
@@ -50,9 +57,9 @@ function escape($value) {
       <div class="container nav">
         <a class="logo" href="index.html">Arvin<span>.</span></a>
 
-        <button class="menu-btn" aria-label="Open menu">☰</button>
+        <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="site-navigation">☰</button>
 
-        <nav>
+        <nav id="site-navigation">
           <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
             <li><a href="about.html">About</a></li>
@@ -126,6 +133,17 @@ function escape($value) {
                   <?php endforeach; ?>
 
                 </div>
+              <?php endif; ?>
+
+              <?php if (!empty($project['project_url'])): ?>
+                <a
+                  class="btn"
+                  href="<?php echo escape($project['project_url']); ?>"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View project
+                </a>
               <?php endif; ?>
 
             </article>

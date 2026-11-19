@@ -13,6 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $message = trim($_POST['message'] ?? '');
+$website = trim($_POST['website'] ?? '');
+
+// Quietly accept honeypot submissions without storing them.
+if ($website !== '') {
+    header("Location: contact.html?status=success");
+    exit;
+}
 
 // Validate name
 if (strlen($name) < 2 || strlen($name) > 150) {

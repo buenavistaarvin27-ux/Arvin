@@ -1,7 +1,20 @@
-# Prevent directory browsing
+# Prevent directory browsing.
 Options -Indexes
 
-# Protect sensitive configuration and project files
-<FilesMatch "^(\.env|\.git|composer\.(json|lock)|README\.md)$">
+# Basic security headers for the public site.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# Protect repository metadata, environment files, and documentation.
+<FilesMatch "^(\.env|\.git|composer\.(json|lock)|README\.md|database\.sql)$">
+    Require all denied
+</FilesMatch>
+
+# Do not expose backup or temporary files.
+<FilesMatch "(\.bak|\.conf|\.dist|\.fla|\.ini|\.log|\.old|\.orig|\.save|\.sql|\.swp|~)$">
     Require all denied
 </FilesMatch>

@@ -1,48 +1,47 @@
 @@ -1,33 +1 @@
 # Arvin Buenavista — Personal Portfolio
 
-## Pages
-Home, About, Skills, Projects, Resume/Experience, Contact.
+A PHP/MySQL portfolio site with public pages, a project catalogue, a contact inbox, and a protected admin area.
 
-## JavaScript features
-1. Mobile navigation
-2. Contact form validation
-3. Dark/light mode with LocalStorage
-4. Project filtering
-5. Project image modal
-6. Scroll-to-top button
-7. Typing effect
-8. Skill-bar animation
-9. Accordion
-10. Active navigation
+## Included features
 
-## Folder structure
-- index.html
-- about.html
-- skills.html
-- projects.php
-- resume.html
-- contact.html
-- assets/style.css
-- assets/script.js
-- assets/profile.svg
-- assets/project1.svg ... project4.svg
+- Responsive navigation and accessible keyboard focus states
+- Dark/light mode with local storage
+- Project category filters and image preview modal
+- Dynamic projects loaded from MySQL
+- Contact form validation, server-side validation, and a spam honeypot
+- Admin project and contact-message management with CSRF protection
+- SEO metadata, canonical URLs, Open Graph tags, favicon, `robots.txt`, and sitemap
+- Security headers and protected configuration/include directories
 
-## Deploy to InfinityFree
+## TinkerHost deployment
 
-This site uses PHP and MySQL, so it needs PHP hosting; GitHub Pages cannot run its PHP files.
+The intended host is TinkerHost. The GitHub Actions workflow in `.github/workflows/deploy-tinkerhost.yml` deploys to `/htdocs/` over FTPS.
 
-1. Create the InfinityFree website and MySQL database. Keep the database host, name, username, and password from the control panel.
-2. In the GitHub repository, open **Settings → Secrets and variables → Actions** and add these repository secrets:
-   - `INFINITYFREE_FTP_SERVER`
-   - `INFINITYFREE_FTP_USERNAME`
-   - `INFINITYFREE_FTP_PASSWORD`
-   - `INFINITYFREE_DB_HOST`
-   - `INFINITYFREE_DB_NAME`
-   - `INFINITYFREE_DB_USERNAME`
-   - `INFINITYFREE_DB_PASSWORD`
-3. Push to `main`. The `Deploy to InfinityFree` workflow uploads the site to `/htdocs/`; you can also run it manually from the repository's **Actions** tab.
+1. Wait for the TinkerHost account to become active.
+2. Create a MySQL database in TinkerHost and note its host, database name, username, and password.
+3. Import `database/schema.sql` into the new database using phpMyAdmin.
+4. Generate a bcrypt password hash for the first admin account:
 
-Use the FTP server and database details shown in your InfinityFree control panel. Do not commit credentials or post them in chat. The workflow creates `config/database.php` from Actions secrets during deployment; that file remains ignored by Git.
+   ```sh
+   php -r "echo password_hash('REPLACE_WITH_A_LONG_UNIQUE_PASSWORD', PASSWORD_DEFAULT), PHP_EOL;"
+   ```
 
-Note: Replace the placeholder email/social links with your real links before submission.
+   Use the generated hash in the commented admin-user insert at the bottom of `database/schema.sql`. Use a real email address and a unique password.
+5. Add these GitHub Actions repository secrets:
+
+   - `TINKERHOST_FTP_SERVER` — normally `ftpupload.net`
+   - `TINKERHOST_FTP_USERNAME`
+   - `TINKERHOST_FTP_PASSWORD`
+   - `TINKERHOST_DB_HOST`
+   - `TINKERHOST_DB_NAME`
+   - `TINKERHOST_DB_USERNAME`
+   - `TINKERHOST_DB_PASSWORD`
+
+6. Push to `main` or run the workflow manually from GitHub Actions.
+
+The workflow creates `config/database.php` from secrets at deploy time. Credentials must never be committed to Git or posted in chat.
+
+## Personal information still needed
+
+The code is technically prepared, but the portfolio should still be personalized with truthful information: a downloadable resume PDF, real project names and outcomes, individual project URLs, certifications or training, and a professional email address. The database starter records contain clearly marked replacement text so no personal achievements are fabricated.
